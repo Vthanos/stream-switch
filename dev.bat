@@ -1,5 +1,9 @@
 @echo off
-SET CMD=%1
+setlocal
+set ROOT=%~dp0
+cd /d "%ROOT%"
+
+set CMD=%1
 
 IF "%CMD%"=="deps" (
   go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
@@ -13,30 +17,29 @@ IF "%CMD%"=="proto" (
 )
 
 IF "%CMD%"=="run-backend" (
-  go run backend/go/cmd/server
+  go run ./backend/go/cmd/server
   goto :eof
 )
 
 IF "%CMD%"=="run-gateway" (
   set GRPC_TARGET=localhost:50051
-  go run gateway/ws/cmd/gateway
+  go run ./gateway/ws/cmd/gateway
   goto :eof
 )
 
 IF "%CMD%"=="run-sim" (
   set GRPC_TARGET=localhost:50051
-  go run tools/sim/cmd/sim
+  go run ./tools/sim/cmd/sim
   goto :eof
 )
 
 IF "%CMD%"=="run-all" (
-  echo Starting backend, gateway, and simulator...
-  start cmd /k "go run backend/go/cmd/server"
+  echo Starting backend, gateway, and simulator... (open http://localhost:8080)
+  start cmd /k "cd /d %ROOT% && go run ./backend/go/cmd/server"
   timeout /t 1 >nul
-  start cmd /k "set GRPC_TARGET=localhost:50051 && go run gateway/ws/cmd/gateway"
+  start cmd /k "cd /d %ROOT% && set GRPC_TARGET=localhost:50051 && go run ./gateway/ws/cmd/gateway"
   timeout /t 1 >nul
-  start cmd /k "set GRPC_TARGET=localhost:50051 && go run tools/sim/cmd/sim"
-  echo Open http://localhost:8080
+  start cmd /k "cd /d %ROOT% && set GRPC_TARGET=localhost:50051 && go run ./tools/sim/cmd/sim"
   goto :eof
 )
 

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package sensor.v1;
 
-option go_package = "streamswitch/sensorv1;sensorv1";
+option go_package = "streamswitch/proto;proto";
 
 message Reading {
   string sensor_id = 1;
@@ -16,8 +16,8 @@ message Subscription {
 }
 
 message ServerMeta {
-  int64 received_unix_nano = 1; // when server ingested
-  int64 sent_unix_nano = 2;     // when server emitted
+  int64 received_unix_nano = 1;
+  int64 sent_unix_nano = 2;
 }
 
 message ReadingWithMeta {
@@ -27,13 +27,17 @@ message ReadingWithMeta {
 
 message Ack { uint64 last_seq = 1; }
 
+// ---- Telemetry ----
 service Telemetry {
   rpc Publish(stream Reading) returns (Ack);
   rpc Subscribe(Subscription) returns (stream ReadingWithMeta);
 }
 
-message Ping { uint64 n = 1; int64 ts_unix_nano = 2; }
+// ---- Bench (no name clash) ----
+message PingRequest { uint64 n = 1; int64 ts_unix_nano = 2; }
+message PingReply   { uint64 n = 1; int64 ts_unix_nano = 2; }
+
 service Bench {
-  rpc Ping(Ping) returns (Ping);
-  rpc StreamPing(stream Ping) returns (stream Ping);
+  rpc Ping(PingRequest) returns (PingReply);
+  rpc StreamPing(stream PingRequest) returns (stream PingReply);
 }

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	pb "streamswitch/sensorv1"
+	pb "streamswitch/proto"
 )
 
 type hub struct {
@@ -46,12 +46,18 @@ func (h *hub) broadcast(r *pb.Reading) {
 	defer h.mu.RUnlock()
 	if arr := h.subs["*"]; len(arr) > 0 {
 		for _, ch := range arr {
-			select { case ch <- msg: default: }
+			select {
+			case ch <- msg:
+			default:
+			}
 		}
 	}
 	if arr := h.subs[r.SensorId]; len(arr) > 0 {
 		for _, ch := range arr {
-			select { case ch <- msg: default: }
+			select {
+			case ch <- msg:
+			default:
+			}
 		}
 	}
 }
@@ -75,14 +81,24 @@ func (t *telemetry) Publish(stream pb.Telemetry_PublishServer) error {
 
 func (t *telemetry) Subscribe(req *pb.Subscription, stream pb.Telemetry_SubscribeServer) error {
 	ids := req.SensorIds
-	if len(ids) == 0 { ids = []string{"*"} }
+	if len(ids) == 0 {
+		ids = []string{"*"}
+	}
 	ch := make(chan *pb.ReadingWithMeta, 1024)
 	cleanups := make([]func(), 0, len(ids))
-	for _, id := range ids { cleanups = append(cleanups, t.h.add(id, ch)) }
-	defer func() { for _, c := range cleanups { c() } }()
+	for _, id := range ids {
+		cleanups = append(cleanups, t.h.add(id, ch))
+	}
+	defer func() {
+		for _, c := range cleanups {
+			c()
+		}
+	}()
 
 	sampleEvery := time.Duration(0)
-	if req.SampleRateHz > 0 { sampleEvery = time.Second / time.Duration(req.SampleRateHz) }
+	if req.SampleRateHz > 0 {
+		sampleEvery = time.Second / time.Duration(req.SampleRateHz)
+	}
 	tick := time.NewTicker(time.Millisecond * 10)
 	defer tick.Stop()
 	var lastSend time.Time
@@ -93,10 +109,14 @@ func (t *telemetry) Subscribe(req *pb.Subscription, stream pb.Telemetry_Subscrib
 			now := time.Now().UnixNano()
 			m.Meta.SentUnixNano = now
 			if sampleEvery > 0 {
-				if time.Since(lastSend) < sampleEvery { continue }
+				if time.Since(lastSend) < sampleEvery {
+					continue
+				}
 				lastSend = time.Now()
 			}
-			if err := stream.Send(m); err != nil { return err }
+			if err := stream.Send(m); err != nil {
+				return err
+			}
 		case <-tick.C:
 		case <-stream.Context().Done():
 			return nil
@@ -105,29 +125,38 @@ func (t *telemetry) Subscribe(req *pb.Subscription, stream pb.Telemetry_Subscrib
 }
 
 // Bench service
+// Bench service
 type bench struct{ pb.UnimplementedBenchServer }
 
-func (b *bench) Ping(ctx context.Context, p *pb.Ping) (*pb.Ping, error) {
-	return &pb.Ping{N: p.N, TsUnixNano: time.Now().UnixNano()}, nil
+func (b *bench) Ping(ctx context.Context, p *pb.PingRequest) (*pb.PingReply, error) {
+	return &pb.PingReply{N: p.N, TsUnixNano: time.Now().UnixNano()}, nil
 }
 
 func (b *bench) StreamPing(s pb.Bench_StreamPingServer) error {
 	for {
 		msg, err := s.Recv()
-		if err != nil { return err }
-		msg.TsUnixNano = time.Now().UnixNano()
-		if err := s.Send(msg); err != nil { return err }
+		if err != nil {
+			return err
+		}
+		reply := &pb.PingReply{N: msg.N, TsUnixNano: time.Now().UnixNano()}
+		if err := s.Send(reply); err != nil {
+			return err
+		}
 	}
 }
 
 func main() {
 	lis, err := net.Listen("tcp", ":50051")
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	s := grpc.NewServer()
 	h := newHub()
 	pb.RegisterTelemetryServer(s, &telemetry{h: h})
 	pb.RegisterBenchServer(s, &bench{})
 	log.Println("Go gRPC backend listening on :50051")
-	if err := s.Serve(lis); err != nil { log.Fatal(err) }
+	if err := s.Serve(lis); err != nil {
+		log.Fatal(err)
+	}
 	_ = rand.Int()
 }
