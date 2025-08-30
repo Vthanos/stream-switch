@@ -1,0 +1,39 @@
+syntax = "proto3";
+package sensor.v1;
+
+option go_package = "streamswitch/sensorv1;sensorv1";
+
+message Reading {
+  string sensor_id = 1;
+  int64 ts_unix_nano = 2; // client timestamp
+  double value = 3;
+  uint64 seq = 4;
+}
+
+message Subscription {
+  repeated string sensor_ids = 1; // empty = all
+  uint32 sample_rate_hz = 2;      // optional hint
+}
+
+message ServerMeta {
+  int64 received_unix_nano = 1; // when server ingested
+  int64 sent_unix_nano = 2;     // when server emitted
+}
+
+message ReadingWithMeta {
+  Reading reading = 1;
+  ServerMeta meta = 2;
+}
+
+message Ack { uint64 last_seq = 1; }
+
+service Telemetry {
+  rpc Publish(stream Reading) returns (Ack);
+  rpc Subscribe(Subscription) returns (stream ReadingWithMeta);
+}
+
+message Ping { uint64 n = 1; int64 ts_unix_nano = 2; }
+service Bench {
+  rpc Ping(Ping) returns (Ping);
+  rpc StreamPing(stream Ping) returns (stream Ping);
+}

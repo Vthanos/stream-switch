@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>StreamSwitch</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem 1.25rem; background: #0b0e12; color: #e7eaf0; }
+    header { display:flex; align-items:center; gap:1rem; }
+    .pill { background:#18202b; padding:.4rem .7rem; border-radius:999px; font-size:.85rem;}
+    .row { display:flex; gap:1rem; margin-top:1rem; flex-wrap:wrap; }
+    .card { background:#11161d; border:1px solid #1f2835; border-radius:16px; padding:1rem; flex:1 1 320px; min-width:320px; }
+    .stat { font-size:2rem; font-weight:700; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.9rem; }
+    .list { max-height: 280px; overflow:auto; background:#0c1117; border:1px solid #1f2835; padding:.5rem; border-radius:12px; }
+    button { background:#2563eb; color:#fff; border:none; padding:.6rem .8rem; border-radius:10px; cursor:pointer; }
+    select { background:#0c1117; color:#e7eaf0; border:1px solid #1f2835; padding:.4rem .6rem; border-radius:10px; }
+    canvas { width:100%; height:180px; background:#0c1117; border:1px solid #1f2835; border-radius:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>StreamSwitch</h1>
+    <span class="pill">Go gRPC → WebSocket → Browser</span>
+  </header>
+
+  <div class="row">
+    <div class="card">
+      <div>Backend</div>
+      <div style="display:flex; gap:.5rem; align-items:center; margin-top:.5rem;">
+        <select id="backend">
+          <option value="ws://localhost:8080">Go (default)</option>
+          <option value="ws://localhost:8081">Spring (future)</option>
+        </select>
+        <button id="connectBtn">Connect</button>
+        <span id="status" class="pill">disconnected</span>
+      </div>
+      <div style="margin-top:.75rem;">Sensor ID filter</div>
+      <input id="sensor" class="mono" style="width:100%; padding:.5rem; background:#0c1117; color:#e7eaf0; border:1px solid #1f2835; border-radius:10px;" placeholder="* for all" value="*"/>
+    </div>
+
+    <div class="card">
+      <div>Throughput (msg/s)</div>
+      <div class="stat" id="tps">0</div>
+      <canvas id="tpsChart"></canvas>
+    </div>
+
+    <div class="card">
+      <div>Latency (ms)</div>
+      <div>p50: <span id="p50">-</span> • p95: <span id="p95">-</span></div>
+      <canvas id="latChart"></canvas>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card" style="flex:2">
+      <div>Last messages</div>
+      <div class="list mono" id="log"></div>
+    </div>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>
