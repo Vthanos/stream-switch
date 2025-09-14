@@ -23,4 +23,4 @@ Open http://localhost:8080
 - dev.ps1 (PowerShell), dev.bat (CMD)
 - Makefile (optional for Linux/macOS)
 
-If you later publish to GitHub, change `module` in go.mod and `go_package` in proto accordingly and regenerate with `.\dev.ps1 proto`.
+ change `module` in go.mod and `go_package` in proto accordingly and regenerate with `.\dev.ps1 proto`.
